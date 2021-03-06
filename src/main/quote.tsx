@@ -80,20 +80,8 @@ const TransformQuote = (quote: RawQuote): Quote => {
 }
 
 export const GetQuotes = (symbols: string[]): Promise<Quote[] | never[] | undefined> => {
-    const url = `https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=${symbols.join(',')}`;
-
-    // const myRequest = new Request(url, {
-    //     method: 'GET',
-    //     mode: 'no-cors',
-    // });
-
-    // fetch(myRequest).then(function (response) {
-    //     return response;
-    // }).then(function (response) {
-    //     console.log(response);
-    // }).catch(function (e) {
-    //     console.log(e);
-    // });
+    const url = `https://873laarwv8.execute-api.us-west-2.amazonaws.com/?symbols=${symbols.join(',')}`;
+    // const url = `https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=${symbols.join(',')}`;
 
     return axios.get(url).then(res => {
         const response: APIResponse = res.data;
