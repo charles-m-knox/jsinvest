@@ -16,8 +16,7 @@ import { GetQuotes } from './quote';
 import Collapse from 'react-bootstrap/Collapse'
 import * as yaml from 'yaml';
 import { asCurrency, asPercentage } from './helpers';
-
-// const yaml = require('js-yaml');
+import { GetCompleteExample, GetEmptyExample } from './example';
 
 const InvestmentsView = () => {
     const getBasicSymbol = (): Symbol => {
@@ -29,7 +28,7 @@ const InvestmentsView = () => {
 
     const getBasicStrategy = (): Strategy => {
         return {
-            name: 'AggressiveRetirement',
+            name: `AggressiveRetirement`,
             symbols: [getBasicSymbol()],
             allocations: [getBasicAllocation()],
         }
@@ -39,7 +38,7 @@ const InvestmentsView = () => {
         return {
             name: '401k',
             balance: 100000.0,
-            strategy: 'AggressiveRetirement',
+            strategy: `AggressiveRetirement`,
         }
     }
 
@@ -52,7 +51,7 @@ const InvestmentsView = () => {
 
     const getBasicResult = (): Result => {
         return {
-            name: 'AggressiveRetirement',
+            name: 'AggressiveRetirement1',
             symbol: 'SCHB',
             type: 'broad',
             shares: 0.0,
@@ -90,7 +89,9 @@ const InvestmentsView = () => {
     const setConfig = (config: Config, configYamlStr: string) => {
         setStrategiesState(config.strategies);
         setAccountsState(config.accounts);
-        setExportStr(configYamlStr);
+        if (configYamlStr) {
+            setExportStr(configYamlStr);
+        }
     }
 
     const setExportStrSimple = () => {
@@ -128,46 +129,7 @@ const InvestmentsView = () => {
     const [results, setResults] = useState([getBasicResult()]);
     const [importStr, setImportStr] = useState('');
     const [exportStr, setExportStr] = useState('');
-
-    // const onSymbolChange = (strategyIndex: number, symbolIndex: number, newSymbol: Symbol) => {
-    //     const newStrategies = strategies;
-    //     newStrategies[strategyIndex].symbols[symbolIndex] = newSymbol;
-    //     setStrategies(newStrategies);
-    //     console.log(newStrategies);
-    // };
-
-    // const onStrategyNameChange = (strategyIndex: number, newName: string) => {
-    //     const newStrategies = strategies;
-    //     newStrategies[strategyIndex].name = newName;
-    //     setStrategies(newStrategies);
-    //     console.log(newStrategies);
-    //     // setStrategies(strategies.map((strategy: Strategy): Strategy => {
-    //     //     if (strategy.name === strategyName) {
-    //     //         strategy.name = newName;
-    //     //         return strategy;
-    //     //     }
-    //     //     return strategy;
-    //     // }));
-    // }
-
-    // const onAddSymbol = (strategyIndex: number, newSymbol: Symbol) => {
-    //     const newStrategies = strategies;
-    //     newStrategies[strategyIndex].symbols.push(newSymbol);
-
-    //     // TODO: this is a weird workaround to force a state update
-    //     const newStrategy0 = strategies[0];
-    //     newStrategies[0] = newStrategy0;
-
-    //     setStrategies(newStrategies);
-    //     console.log(newStrategies);
-    // };
-
-    // const onDelSymbol = (strategyIndex: number, symbolIndex: number) => {
-    //     const newStrategies = strategies;
-    //     newStrategies[strategyIndex].symbols.splice(symbolIndex, 1);
-    //     setStrategies(newStrategies);
-    //     console.log(newStrategies);
-    // };
+    const [useYahooDirect, setUseYahooDirect] = useState(false);
 
     const onStrategyNameChange = (e: any, idx: number) => {
         const newStrategies = [...strategies];
@@ -190,23 +152,6 @@ const InvestmentsView = () => {
 
         setStrategies(newStrategies);
     }
-
-    // const getAllocations = (strategy: Strategy): Allocation => {
-    //     const allocations: Allocation[] = [getBasicAllocation()];
-    //     if (strategy.symbols.length > 0) {
-    //         strategy.symbols.forEach((symbol: Symbol) => {
-    //             allocations[symbol.type] = 1 / strategy.symbols.length;
-    //         });
-    //     }
-    //     return allocations;
-    // }
-
-    // const updateAllAllocations = (strategies: Strategy[]): Strategy[] => {
-    //     return strategies.map((strategy: Strategy) => {
-    //         // strategy.allocations = getAllocations(strategy);
-    //         return strategy;
-    //     })
-    // }
 
     const onStrategySymbolAdd = (idx: number) => {
         const newStrategies = strategies.map((strategy: Strategy, i: number) => {
@@ -302,14 +247,17 @@ const InvestmentsView = () => {
     const [tableOpen, setTableOpen] = useState(false);
 
     return (
-        <React.Fragment>
-            <Jumbotron>
-                <h1>Invest smarter and faster!</h1>
+        <Container fluid style={{ paddingLeft: '0px', paddingRight: '0px' }}>
+            <Jumbotron >
+                <h1>Invest faster!</h1>
                 <p>
-                    Use this simple tool to quickly allocate your financial accounts according to portfolios that you set up.
+                    Use this tool to balance your financial accounts according to strategies that you set up. If you have multiple financial accounts, but the same financial strategies across many of them and need to split share prices across different account balances, this is for you.
                 </p>
                 <p>
-                    <Button variant="primary" className="mr-3"
+                    This tool was written by <a href="https://charlesmknox.com" rel="noopener noreferer">charles-m-knox</a>. View the source code on <a href="https://github.com/charles-m-knox/jsinvest" rel="noopener noreferer">GitHub here</a>. If you want to send me a tip, <a href="https://charlesmknox.com/about/#ways-to-support-me-directly" rel="noopener noreferer">visit the "about" page on my site here</a>. I do not store any data about your interactions with this site.
+                </p>
+                <p>
+                    <Button variant="primary" className="mr-3 mb-3"
                         aria-controls="import-export-opener"
                         aria-expanded={importExportOpen} onClick={() => {
                             setExportStrSimple();
@@ -321,9 +269,29 @@ const InvestmentsView = () => {
                             }
                             setImportExportOpen(!importExportOpen);
                         }}>Import/export</Button>
+                    <Button variant="primary" className="mr-3 mb-3"
+                        aria-controls="load-example" onClick={() => {
+                            const example = GetCompleteExample();
+                            setConfig(example, "");
+                            setStep1Open(true);
+                            setStep2Open(false);
+                            setStep3Open(false);
+                            setTableOpen(false);
+                            setImportExportOpen(false);
+                        }}>Load Example</Button>
+                    <Button variant="primary" className="mr-3 mb-3"
+                        aria-controls="load-example" onClick={() => {
+                            const example = GetEmptyExample();
+                            setConfig(example, "");
+                            setStep1Open(true);
+                            setStep2Open(false);
+                            setStep3Open(false);
+                            setTableOpen(false);
+                            setImportExportOpen(false);
+                        }}>Reset</Button>
                 </p>
             </Jumbotron>
-            <Container>
+            <Container style={{ paddingLeft: '15px', paddingRight: '15px' }}>
                 <Collapse in={importExportOpen}>
                     <Row>
                         <Col>
@@ -346,7 +314,7 @@ const InvestmentsView = () => {
                             <Row>
                                 <Col>
                                     <Form.Group controlId="import-textarea">
-                                        <Form.Label>Paste in here to Import</Form.Label>
+                                        <Form.Label>Paste here to Import:</Form.Label>
                                         <Form.Control as="textarea" rows={6}
                                             value={importStr}
                                             onChange={(e: any) => {
@@ -356,11 +324,11 @@ const InvestmentsView = () => {
                                 </Col>
                                 <Col>
                                     <Form.Group controlId="export-textarea">
-                                        <Form.Label>Copy from here to Export</Form.Label>
+                                        <Form.Label>Export:</Form.Label>
                                         <Form.Control as="textarea" rows={6}
                                             readOnly={true}
                                             onChange={(e: any) => {
-                                                console.log(e.target.value);
+                                                // console.log(e.target.value);
                                             }}
                                             value={exportStr}
                                         />
@@ -391,10 +359,10 @@ const InvestmentsView = () => {
                                     </Button> */}
                                     <Button className="mb-3" onClick={() => {
                                         navigator.clipboard.writeText(exportStr);
-                                        setImportExportOpen(false);
-                                        setStep1Open(true);
-                                        setStep2Open(true);
-                                        setStep3Open(true);
+                                        // setImportExportOpen(false);
+                                        // setStep1Open(true);
+                                        // setStep2Open(true);
+                                        // setStep3Open(true);
                                     }}>
                                         Copy to Clipboard
                                     </Button>
@@ -408,7 +376,7 @@ const InvestmentsView = () => {
                         setStep1Open(!step1Open);
                     }}>
                         <h2>
-                            Step 1. Create a Strategy
+                            Step 1. Strategies
                         </h2>
                     </Col>
                 </Row>
@@ -456,6 +424,14 @@ const InvestmentsView = () => {
                                             setStep3Open(false)
                                         }}>
                                         Next step
+                                    </Button>
+                                </Col>
+                                <Col>
+                                    <Button
+                                        className="mb-3"
+                                        variant="outline-primary"
+                                        onClick={addStrategy}>
+                                        Add strategy
                                     </Button>
                                 </Col>
                             </Row>
@@ -538,7 +514,7 @@ const InvestmentsView = () => {
                             </Row>
                             <Row>
                                 <Col>
-                                    <Button className="mb-3" onClick={() => {
+                                    <Button className="mb-3 mr-3" onClick={() => {
                                         let balancedResults: Result[] = [];
                                         // todo: refactor
                                         const allSymbols: any = {};
@@ -547,7 +523,7 @@ const InvestmentsView = () => {
                                                 allSymbols[symbol.symbol] = symbol.symbol;
                                             });
                                         });
-                                        GetQuotes(Object.keys(allSymbols)).then((quotes) => {
+                                        GetQuotes(Object.keys(allSymbols), useYahooDirect).then((quotes) => {
                                             if (Array.isArray(quotes)) {
                                                 accounts.forEach((account: Account) => {
                                                     strategies.forEach((strategy: Strategy) => {
@@ -569,9 +545,33 @@ const InvestmentsView = () => {
                                     }}>
                                         Balance
                                     </Button>
-
+                                    <Button className="mb-3 mr-3" variant="outline-secondary"
+                                        onClick={() => {
+                                            setUseYahooDirect(!useYahooDirect);
+                                        }}>
+                                        {useYahooDirect ? 'Use Direct Query' : 'Use Proxy (default)'}
+                                    </Button>
                                 </Col>
                             </Row>
+                            <Collapse in={useYahooDirect}>
+                                <Row>
+                                    <Col>
+                                        <span className="text-muted small">
+                                            Warning: When directly connecting to Yahoo's API through the browser, CORS manipulation is needed. Requests will fail unless you know what you're doing. If this sounds scary, just press the "Use Proxy (default)" button.<br /><br />
+                                            I have provided a proxy using an AWS API gateway and Lambda function that will query the Yahoo Finance servers and allow this website as an origin only.
+                                        </span>
+                                        {/* {useYahooDirect ? (
+                                            <span className="text-muted small">
+                                                Warning: CORS extension is needed.
+                                            </span>
+                                        ) : (
+                                                <span className="text-muted small">
+
+                                                </span>
+                                            )} */}
+                                    </Col>
+                                </Row>
+                            </Collapse>
                             <Collapse in={tableOpen}>
                                 <Row>
                                     <Col>
@@ -639,8 +639,7 @@ const InvestmentsView = () => {
                     </Row>
                 </Collapse>
             </Container>
-        </React.Fragment>
-
+        </Container>
     );
 }
 

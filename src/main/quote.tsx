@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 const TransformQuote = (quote: RawQuote): Quote => {
     const tQuote: Quote = {
         rawQuote: quote,
@@ -79,9 +78,11 @@ const TransformQuote = (quote: RawQuote): Quote => {
     return tQuote;
 }
 
-export const GetQuotes = (symbols: string[]): Promise<Quote[] | never[] | undefined> => {
-    const url = `https://873laarwv8.execute-api.us-west-2.amazonaws.com/?symbols=${symbols.join(',')}`;
-    // const url = `https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=${symbols.join(',')}`;
+export const GetQuotes = (symbols: string[], useYahooDirect: boolean = false): Promise<Quote[] | never[] | undefined> => {
+    let url = `https://873laarwv8.execute-api.us-west-2.amazonaws.com/?symbols=${symbols.join(',')}`;
+    if (useYahooDirect === true) {
+        url = `https://query1.finance.yahoo.com/v7/finance/quote?lang=en-US&region=US&corsDomain=finance.yahoo.com&symbols=${symbols.join(',')}`;
+    }
 
     return axios.get(url).then(res => {
         const response: APIResponse = res.data;

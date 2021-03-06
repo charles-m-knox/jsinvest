@@ -39,14 +39,15 @@ const StrategyView = function (props: StrategyViewProps) {
 
     return (
         <React.Fragment key={`strategy-${idx}`}>
-            <Row>
+            <Row className="border-top pt-3">
                 <Col>
+                    <label htmlFor={`strategy-name-${idx}`}>Strategy name</label>
                     <InputGroup className="mb-3">
-                        <InputGroup.Prepend>
+                        {/* <InputGroup.Prepend>
                             <InputGroup.Text>
-                                Name
+                                <b>Name</b>
                             </InputGroup.Text>
-                        </InputGroup.Prepend>
+                        </InputGroup.Prepend> */}
                         <Form.Control
                             type="text"
                             placeholder="401k"
@@ -61,13 +62,7 @@ const StrategyView = function (props: StrategyViewProps) {
                         <InputGroup.Append>
                             <Button
                                 className=""
-                                variant="outline-secondary"
-                                onClick={onStrategyAdd}>
-                                Add strategy
-                            </Button>
-                            <Button
-                                className=""
-                                variant="outline-secondary"
+                                variant="outline-danger"
                                 disabled={strategies.length <= 1}
                                 onClick={() => {
                                     onStrategyDel(idx);
@@ -198,13 +193,13 @@ const StrategyView = function (props: StrategyViewProps) {
                         strategies[idx].allocations.map((allocation: Allocation, i: number): JSX.Element => {
                             return (
                                 <Row key={`strategy-${idx}-allocations-${i}-row`}>
-                                    <Col sm={1}></Col>
-                                    <Col sm={5}>
+                                    <Col sm={1} xs={0}></Col>
+                                    <Col xs={6} sm={5}>
                                         <InputGroup className="mb-3">
                                             <InputGroup.Prepend>
                                                 <InputGroup.Text>
-                                                    Allocation
-                                            </InputGroup.Text>
+                                                    Type
+                                                </InputGroup.Text>
                                             </InputGroup.Prepend>
                                             <Form.Control
                                                 type="text"
@@ -218,13 +213,13 @@ const StrategyView = function (props: StrategyViewProps) {
                                                 }} />
                                         </InputGroup>
                                     </Col>
-                                    <Col sm={6}>
+                                    <Col xs={6} sm={6}>
                                         <InputGroup className="mb-3">
-                                            <InputGroup.Prepend>
+                                            {/* <InputGroup.Prepend>
                                                 <InputGroup.Text>
                                                     Amount (%)
                                                 </InputGroup.Text>
-                                            </InputGroup.Prepend>
+                                            </InputGroup.Prepend> */}
                                             <Form.Control
                                                 type="number"
                                                 placeholder="broad"
@@ -233,13 +228,16 @@ const StrategyView = function (props: StrategyViewProps) {
                                                 id={`strategy-${idx}-allocations-${i}-amount`}
                                                 value={strategies[idx].allocations[i].amount}
                                                 onChange={(e: any): void => {
-                                                    const newAmount = Number.parseFloat(e.target.value);
+                                                    let newAmount = Number.parseFloat(e.target.value);
                                                     if (Number.isNaN(newAmount)) {
-                                                        return;
+                                                        newAmount = 0;
                                                     }
                                                     onAllocationAmountChange(idx, i, newAmount);
                                                 }} />
                                             <InputGroup.Append>
+                                                <InputGroup.Text>
+                                                    %
+                                                </InputGroup.Text>
                                                 <Button
                                                     className=""
                                                     variant="outline-secondary"
@@ -266,25 +264,6 @@ const StrategyView = function (props: StrategyViewProps) {
                     }
                 </Col>
             </Row>
-            {/* <Row>
-                <Col>
-                    <Button className="mb-3" onClick={onStrategyAdd}>
-                        Add another strategy
-                    </Button>
-                </Col>
-                <Col>
-                    {strategies.length > 1 && (
-                        <Button
-                            className="mb-3"
-                            variant="danger"
-                            onClick={() => {
-                                onStrategyDel(idx);
-                            }}>
-                            Delete this strategy
-                        </Button>
-                    )}
-                </Col>
-            </Row> */}
         </React.Fragment >
     );
 }
