@@ -63,7 +63,7 @@ const StrategyView = function (props: StrategyViewProps) {
                                 className=""
                                 variant="outline-secondary"
                                 onClick={onStrategyAdd}>
-                                +
+                                Add strategy
                             </Button>
                             <Button
                                 className=""
@@ -90,6 +90,14 @@ const StrategyView = function (props: StrategyViewProps) {
                     </p>
                 </Col>
             </Row> */}
+            <Row>
+                <Col sm={1}></Col>
+                <Col sm={11}>
+                    <p className="text-muted">
+                        <i><b>Symbols</b> - choose the symbols (stock/ETF names) and their allocations (grouping) here.</i>
+                    </p>
+                </Col>
+            </Row>
             <Row>
                 <Col>
                     {
@@ -176,6 +184,14 @@ const StrategyView = function (props: StrategyViewProps) {
                     </p>
                 </Col>
             </Row> */}
+            <Row>
+                <Col sm={1}></Col>
+                <Col sm={11}>
+                    <p className="text-muted">
+                        <i><b>Allocations</b> - choose how to group and divide the above stocks/ETFs here.</i>
+                    </p>
+                </Col>
+            </Row>
             <Row>
                 <Col>
                     {

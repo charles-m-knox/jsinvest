@@ -55,3 +55,8 @@ export const ResultHeaders = [
     "Group Allocation %",
     "From Balance",
 ]
+
+export interface Config {
+    accounts: Account[];
+    strategies: Strategy[];
+}

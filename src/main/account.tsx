@@ -4,8 +4,8 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
 import { Account } from './models'
-
 
 export interface AccountViewProps {
     accounts: Account[];
@@ -34,7 +34,7 @@ export const AccountView = function (props: AccountViewProps) {
         <div className="mb-3">
             <Form>
                 <Row>
-                    <Col sm={4}>
+                    <Col sm={3}>
                         <InputGroup className="mb-3">
                             <InputGroup.Prepend>
                                 <InputGroup.Text>
@@ -116,27 +116,26 @@ export const AccountView = function (props: AccountViewProps) {
                                 }} /> */}
                         </InputGroup>
                     </Col>
-                </Row>
-                <Row>
-                    <Col>
-                        <Button
-                            onClick={() => {
-                                onAcctAdd(idx);
-                            }}>
-                            Add account
-                </Button>
-                    </Col>
-                    <Col>
-                        <Button variant="danger"
-                            onClick={() => {
-                                onAcctDel(idx);
-                            }}>
-                            Delete account
-                        </Button>
+                    <Col sm={1}>
+                        <ButtonGroup aria-label={`accounts-manage-buttons-${idx}`}>
+                            <Button
+                                onClick={() => {
+                                    onAcctAdd(idx);
+                                }}>
+                                +
+                            </Button>
+                            <Button variant="danger"
+                                disabled={accounts.length <= 1}
+                                onClick={() => {
+                                    onAcctDel(idx);
+                                }}>
+                                -
+                            </Button>
+                        </ButtonGroup>
                     </Col>
                 </Row>
             </Form>
-        </div>
+        </div >
 
     )
 }

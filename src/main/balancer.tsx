@@ -1,4 +1,5 @@
 import { Account, Allocation, Strategy, Symbol, Result } from './models';
+import { Quote } from './quote';
 
 // const getStrategyForSymbol = (strategies: Strategy[], symbolName: string): Strategy | null => {
 //     const result = strategies.filter((strategy: Strategy) => {
@@ -29,7 +30,7 @@ const getAllocation = (strategy: Strategy, allocationType: string): Allocation =
     return { type: '', amount: 0.0 };
 }
 
-export const BalanceAccount = (account: Account, strategy: Strategy, quotes: any): Result[] => {
+export const BalanceAccount = (account: Account, strategy: Strategy, quotes: Quote[]): Result[] => {
     // first, group symbols according to their classification
     // https://github.com/charles-m-knox/goinvest/blob/main/helpers/helpers.go#L21-L28
     const results: Result[] = [];
@@ -63,35 +64,35 @@ export const BalanceAccount = (account: Account, strategy: Strategy, quotes: any
 
             console.log(groupAllocationAmount, allocPercentageFromTotal, allocPerSymbol);
             Object.keys(groups[group]).forEach((symbol: string, j: number) => {
-                quotes.forEach((quote: any, k: number) => {
-                    // if (quote.symbol === symbol) {
-                    const shares = Math.floor(allocPerSymbol / quote.price);
-                    const totalAllocated = shares * quote.price;
-                    groups[group][symbol] = {
-                        shares: shares,
-                        sharePrice: quote.price,
-                        remainder: allocPerSymbol - totalAllocated,
-                        totalAllocated: totalAllocated,
-                        idealAllocation: allocPerSymbol,
-                        idealGroupAllocationPercentage: groupAllocation.amount,
-                        idealSymbolAllocationPercentage: allocPercentageFromTotal,
-                    };
-                    const newResult = {
-                        name: account.name,
-                        symbol: symbol,
-                        type: group,
-                        shares: shares,
-                        sharePrice: quote.price,
-                        purchasePrice: totalAllocated,
-                        allocated: allocPerSymbol,
-                        remainder: groups[group][symbol].remainder,
-                        symbolAllocationPercentage: groups[group][symbol].idealSymbolAllocationPercentage,
-                        groupAllocationPercentage: groups[group][symbol].idealGroupAllocationPercentage,
-                        fromBalance: account.balance,
-                    };
-                    console.log(newResult);
-                    results.push(newResult);
-                    // }
+                quotes.forEach((quote: Quote, k: number) => {
+                    if (quote.rawQuote.symbol === symbol) {
+                        const shares = Math.floor(allocPerSymbol / quote.price);
+                        const totalAllocated = shares * quote.price;
+                        groups[group][symbol] = {
+                            shares: shares,
+                            sharePrice: quote.price,
+                            remainder: allocPerSymbol - totalAllocated,
+                            totalAllocated: totalAllocated,
+                            idealAllocation: allocPerSymbol,
+                            idealGroupAllocationPercentage: groupAllocation.amount,
+                            idealSymbolAllocationPercentage: allocPercentageFromTotal,
+                        };
+                        const newResult = {
+                            name: account.name,
+                            symbol: symbol,
+                            type: group,
+                            shares: shares,
+                            sharePrice: quote.price,
+                            purchasePrice: totalAllocated,
+                            allocated: allocPerSymbol,
+                            remainder: groups[group][symbol].remainder,
+                            symbolAllocationPercentage: groups[group][symbol].idealSymbolAllocationPercentage,
+                            groupAllocationPercentage: groups[group][symbol].idealGroupAllocationPercentage,
+                            fromBalance: account.balance,
+                        };
+                        console.log(newResult);
+                        results.push(newResult);
+                    }
                 })
             })
             console.log(groups);

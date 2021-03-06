@@ -3,14 +3,21 @@ import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import Jumbotron from 'react-bootstrap/Jumbotron';
 // import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
-import { Symbol, Strategy, Account, Allocation, Result, ResultHeaders } from './models'
+import { Config, Symbol, Strategy, Account, Allocation, Result, ResultHeaders } from './models'
 import { AccountView } from './account'
 import StrategyView from './strategy';
 import { BalanceAccount } from './balancer';
 import { ResultsView } from './results';
+import { GetQuotes } from './quote';
+import Collapse from 'react-bootstrap/Collapse'
+import * as yaml from 'yaml';
+import { asCurrency, asPercentage } from './helpers';
+
+// const yaml = require('js-yaml');
 
 const InvestmentsView = () => {
     const getBasicSymbol = (): Symbol => {
@@ -22,7 +29,7 @@ const InvestmentsView = () => {
 
     const getBasicStrategy = (): Strategy => {
         return {
-            name: 'Main',
+            name: 'AggressiveRetirement',
             symbols: [getBasicSymbol()],
             allocations: [getBasicAllocation()],
         }
@@ -32,22 +39,22 @@ const InvestmentsView = () => {
         return {
             name: '401k',
             balance: 100000.0,
-            strategy: 'main',
+            strategy: 'AggressiveRetirement',
         }
     }
 
     const getBasicAllocation = (): Allocation => {
         return {
             type: 'broad',
-            amount: 0.0,
+            amount: 100.0,
         }
     }
 
     const getBasicResult = (): Result => {
         return {
-            name: 'Empty',
-            symbol: 'TEST',
-            type: 'whoa',
+            name: 'AggressiveRetirement',
+            symbol: 'SCHB',
+            type: 'broad',
             shares: 0.0,
             sharePrice: 0.0,
             purchasePrice: 0.0,
@@ -59,9 +66,68 @@ const InvestmentsView = () => {
         }
     }
 
-    const [strategies, setStrategies] = useState([getBasicStrategy()]);
-    const [accounts, setAccounts] = useState([getBasicAccount()]);
+    const getConfig = (accts: Account[], strats: Strategy[]): Config => {
+        const conf: Config = {
+            accounts: accts,
+            strategies: strats,
+        };
+
+        return conf;
+    }
+
+    const setStrategies = (newStrategies: Strategy[]) => {
+        setStrategiesState(newStrategies);
+        const newStrategiesYaml = yaml.stringify(getConfig(accounts, newStrategies), yaml.defaultOptions);
+        setExportStr(newStrategiesYaml);
+    }
+
+    const setAccounts = (newAccounts: Account[]) => {
+        setAccountsState(newAccounts);
+        const newStrategiesYaml = yaml.stringify(getConfig(newAccounts, strategies), yaml.defaultOptions);
+        setExportStr(newStrategiesYaml);
+    }
+
+    const setConfig = (config: Config, configYamlStr: string) => {
+        setStrategiesState(config.strategies);
+        setAccountsState(config.accounts);
+        setExportStr(configYamlStr);
+    }
+
+    const setExportStrSimple = () => {
+        const conf: Config = {
+            accounts: accounts,
+            strategies: strategies,
+        };
+        const configYamlStr = yaml.stringify(conf, yaml.defaultOptions);
+        setExportStr(configYamlStr);
+    }
+
+    const getResultsAsCSV = (results: Result[]): string => {
+        const csvRows = [`#,${ResultHeaders.join(',')}`];
+        results.forEach((result: Result, i: number) => {
+            csvRows.push([
+                i + 1,
+                `"${result.name}"`,
+                `"${result.symbol}"`,
+                `"${result.type}"`,
+                `"${result.shares}"`,
+                `"${asCurrency(result.sharePrice)}"`,
+                `"${asCurrency(result.purchasePrice)}"`,
+                `"${asCurrency(result.allocated)}"`,
+                `"${asCurrency(result.remainder)}"`,
+                `"${asPercentage(result.symbolAllocationPercentage)}"`,
+                `"${asPercentage(result.groupAllocationPercentage)}"`,
+                `"${asCurrency(result.fromBalance)}"`,
+            ].join(','));
+        });
+        return csvRows.join('\n');
+    }
+
+    const [strategies, setStrategiesState] = useState([getBasicStrategy()]);
+    const [accounts, setAccountsState] = useState([getBasicAccount()]);
     const [results, setResults] = useState([getBasicResult()]);
+    const [importStr, setImportStr] = useState('');
+    const [exportStr, setExportStr] = useState('');
 
     // const onSymbolChange = (strategyIndex: number, symbolIndex: number, newSymbol: Symbol) => {
     //     const newStrategies = strategies;
@@ -229,151 +295,352 @@ const InvestmentsView = () => {
         return Object.keys(strategiesObj);
     }
 
+    const [importExportOpen, setImportExportOpen] = useState(false);
+    const [step1Open, setStep1Open] = useState(true);
+    const [step2Open, setStep2Open] = useState(false);
+    const [step3Open, setStep3Open] = useState(false);
+    const [tableOpen, setTableOpen] = useState(false);
+
     return (
-        <Container>
-            <Row>
-                <Col>
-                    <h2>
-                        Step 1. Create a Strategy
-                    </h2>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    <p>
-                        An investment strategy can be the same across different accounts. For example, you might have a 401k, HSA, and Roth IRA all with long-term growth as the goal, with the <b>same exact investments</b>, but just across different accounts. This is one specific investment <i>strategy</i>.
-                    </p>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    {
-                        strategies.map((_strategy: Strategy, j: number): JSX.Element => {
-                            return (
-                                <StrategyView
-                                    key={`strategyview-${j}`}
-                                    idx={j}
-                                    strategies={strategies}
-                                    onStrategyNameChange={onStrategyNameChange}
-                                    onStrategyAdd={addStrategy}
-                                    onStrategyDel={delStrategy}
-                                    onStrategySymbolAdd={onStrategySymbolAdd}
-                                    onStrategySymbolDel={onStrategySymbolDel}
-                                    onStrategySymbolChange={onStrategySymbolChange}
-                                    onAllocationTypeChange={onAllocationTypeChange}
-                                    onAllocationAmountChange={onAllocationAmountChange}
-                                    onAllocationAdd={onAllocationAdd}
-                                    onAllocationDel={onAllocationDel}
-                                ></StrategyView>
-                            )
-                        })
-                    }
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    <h2>
-                        Step 2. Set up Accounts
-                    </h2>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    <p>
-                        Next, you can create any number of accounts that you want, each with its own balance. Then, you can choose a strategy from above to assign to it.
-                    </p>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    {
-                        accounts.map((_account: Account, idx: number) => {
-                            return (
-                                <AccountView
-                                    key={`accountview-${idx}`}
-                                    accounts={accounts}
-                                    idx={idx}
-                                    onAcctNameChange={onAcctNameChange}
-                                    onAcctBalanceChange={onAcctBalanceChange}
-                                    onAcctStrategyChange={onAcctStrategyChange}
-                                    onAcctAdd={onAcctAdd}
-                                    onAcctDel={onAcctDel}
-                                    getStrategies={getStrategies}
-                                />
-                            )
-                        })
-                    }
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    <h2>
-                        Step 3. Get results
-                    </h2>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    <Button onClick={() => {
-                        let balancedResults: Result[] = [];
-                        accounts.forEach((account: Account) => {
-                            strategies.forEach((strategy: Strategy) => {
-                                if (strategy.name.toLowerCase() === account.strategy.toLowerCase()) {
-                                    const r = BalanceAccount(account, strategy, [{ price: 50.0 }]);
-                                    console.log(r);
-                                    balancedResults = [...balancedResults, ...r];
-                                }
-                            })
-                        })
-                        console.log(balancedResults);
-                        setResults([...balancedResults]);
-                    }}>
-                        Balance
-                    </Button>
-                </Col>
-            </Row>
-            <Row>
-                <Col>
-                    {/* <ResultsView results={results} /> */}
-                    <Table striped bordered hover responsive>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                {
-                                    ResultHeaders.map((header: string, i: number): JSX.Element => {
-                                        return (
-                                            <td key={`results-header-${i}`}>{header}</td>
-                                        )
-                                    })
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {
-                                results.map((result: Result, i: number): JSX.Element => {
-                                    return (
-                                        <tr key={`results-row-${i}`}>
-                                            <td>{i + 1}</td>
-                                            <td>{result.name}</td>
-                                            <td>{result.symbol}</td>
-                                            <td>{result.type}</td>
-                                            <td>{result.shares}</td>
-                                            <td>{result.sharePrice}</td>
-                                            <td>{result.purchasePrice}</td>
-                                            <td>{result.allocated}</td>
-                                            <td>{result.remainder}</td>
-                                            <td>{result.symbolAllocationPercentage}</td>
-                                            <td>{result.groupAllocationPercentage}</td>
-                                            <td>{result.fromBalance}</td>
-                                        </tr>
-                                    )
-                                })
+        <React.Fragment>
+            <Jumbotron>
+                <h1>Invest smarter and faster!</h1>
+                <p>
+                    Use this simple tool to quickly allocate your financial accounts according to portfolios that you set up.
+                </p>
+                <p>
+                    <Button variant="primary" className="mr-3"
+                        aria-controls="import-export-opener"
+                        aria-expanded={importExportOpen} onClick={() => {
+                            setExportStrSimple();
+                            if (!importExportOpen) {
+                                setStep1Open(false);
+                                setStep2Open(false);
+                                setStep3Open(false);
+                                setTableOpen(false);
                             }
-                        </tbody>
-                    </Table>
-                </Col>
-            </Row>
-        </Container>
+                            setImportExportOpen(!importExportOpen);
+                        }}>Import/export</Button>
+                </p>
+            </Jumbotron>
+            <Container>
+                <Collapse in={importExportOpen}>
+                    <Row>
+                        <Col>
+                            <Row>
+                                <Col style={{ cursor: 'pointer' }} onClick={() => {
+                                    setImportExportOpen(!importExportOpen);
+                                }}>
+                                    <h2>
+                                        Import/export
+                                    </h2>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <p>
+                                        You can also import/export using the below options.
+                                    </p>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <Form.Group controlId="import-textarea">
+                                        <Form.Label>Paste in here to Import</Form.Label>
+                                        <Form.Control as="textarea" rows={6}
+                                            value={importStr}
+                                            onChange={(e: any) => {
+                                                setImportStr(e.target.value);
+                                            }} />
+                                    </Form.Group>
+                                </Col>
+                                <Col>
+                                    <Form.Group controlId="export-textarea">
+                                        <Form.Label>Copy from here to Export</Form.Label>
+                                        <Form.Control as="textarea" rows={6}
+                                            readOnly={true}
+                                            onChange={(e: any) => {
+                                                console.log(e.target.value);
+                                            }}
+                                            value={exportStr}
+                                        />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <Button className="mb-3" onClick={() => {
+                                        const config = yaml.parse(importStr, yaml.defaultOptions);
+                                        if (config) {
+                                            setConfig(config, importStr);
+                                            setImportExportOpen(false);
+                                            setStep1Open(true);
+                                            setStep2Open(true);
+                                            setStep3Open(true);
+                                            setTableOpen(false);
+                                        }
+                                    }}>
+                                        Import
+                                    </Button>
+                                </Col>
+                                <Col>
+                                    {/* <Button className="mb-3 mr-3" onClick={() => {
+                                        setExportStrSimple();
+                                    }}>
+                                        Export
+                                    </Button> */}
+                                    <Button className="mb-3" onClick={() => {
+                                        navigator.clipboard.writeText(exportStr);
+                                        setImportExportOpen(false);
+                                        setStep1Open(true);
+                                        setStep2Open(true);
+                                        setStep3Open(true);
+                                    }}>
+                                        Copy to Clipboard
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Col>
+                    </Row>
+                </Collapse>
+                <Row>
+                    <Col style={{ cursor: 'pointer' }} onClick={() => {
+                        setStep1Open(!step1Open);
+                    }}>
+                        <h2>
+                            Step 1. Create a Strategy
+                        </h2>
+                    </Col>
+                </Row>
+                <Collapse in={step1Open}>
+                    <Row>
+                        <Col>
+                            <Row>
+                                <Col>
+                                    <p>
+                                        An investment strategy can be the same across different accounts. For example, you might have a 401k, HSA, and Roth IRA all with long-term growth as the goal, with the <b>same exact investments</b>, but just across different accounts. This is one specific investment <i>strategy</i>.
+                                    </p>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    {
+                                        strategies.map((_strategy: Strategy, j: number): JSX.Element => {
+                                            return (
+                                                <StrategyView
+                                                    key={`strategyview-${j}`}
+                                                    idx={j}
+                                                    strategies={strategies}
+                                                    onStrategyNameChange={onStrategyNameChange}
+                                                    onStrategyAdd={addStrategy}
+                                                    onStrategyDel={delStrategy}
+                                                    onStrategySymbolAdd={onStrategySymbolAdd}
+                                                    onStrategySymbolDel={onStrategySymbolDel}
+                                                    onStrategySymbolChange={onStrategySymbolChange}
+                                                    onAllocationTypeChange={onAllocationTypeChange}
+                                                    onAllocationAmountChange={onAllocationAmountChange}
+                                                    onAllocationAdd={onAllocationAdd}
+                                                    onAllocationDel={onAllocationDel}
+                                                ></StrategyView>
+                                            )
+                                        })
+                                    }
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <Button className="mb-3"
+                                        onClick={() => {
+                                            setStep1Open(false)
+                                            setStep2Open(!step2Open)
+                                            setStep3Open(false)
+                                        }}>
+                                        Next step
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Col>
+                    </Row>
+                </Collapse>
+                <Row>
+                    <Col style={{ cursor: 'pointer' }} onClick={() => {
+                        setStep2Open(!step2Open);
+                    }}>
+                        <h2>
+                            Step 2. Set up Accounts
+                        </h2>
+                    </Col>
+                </Row>
+                <Collapse in={step2Open}>
+                    <Row>
+                        <Col>
+                            <Row>
+                                <Col>
+                                    <p>
+                                        Next, you can create any number of accounts that you want, each with its own balance. Then, you can choose a strategy from above to assign to it.
+                                    </p>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    {
+                                        accounts.map((_account: Account, idx: number) => {
+                                            return (
+                                                <AccountView
+                                                    key={`accountview-${idx}`}
+                                                    accounts={accounts}
+                                                    idx={idx}
+                                                    onAcctNameChange={onAcctNameChange}
+                                                    onAcctBalanceChange={onAcctBalanceChange}
+                                                    onAcctStrategyChange={onAcctStrategyChange}
+                                                    onAcctAdd={onAcctAdd}
+                                                    onAcctDel={onAcctDel}
+                                                    getStrategies={getStrategies}
+                                                />
+                                            )
+                                        })
+                                    }
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <Button className="mb-3"
+                                        onClick={() => {
+                                            setStep1Open(false)
+                                            setStep2Open(false)
+                                            setStep3Open(true)
+                                        }}>
+                                        Final step
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Col>
+                    </Row>
+                </Collapse>
+                <Row>
+                    <Col style={{ cursor: 'pointer' }} onClick={() => {
+                        setStep3Open(!step3Open);
+                    }}>
+                        <h2>
+                            Step 3. Get results
+                        </h2>
+                    </Col>
+                </Row>
+                <Collapse in={step3Open}>
+                    <Row>
+                        <Col>
+                            <Row>
+                                <Col>
+                                    <p>
+                                        Just click the "Balance" button to query the Yahoo Finance servers to get quotes for each symbol from above. A table below will populate, and you can copy the results as CSV, so that they can be pasted into your favorite spreadsheet processor.
+                                    </p>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col>
+                                    <Button className="mb-3" onClick={() => {
+                                        let balancedResults: Result[] = [];
+                                        // todo: refactor
+                                        const allSymbols: any = {};
+                                        strategies.forEach((strategy: Strategy) => {
+                                            strategy.symbols.forEach((symbol: Symbol) => {
+                                                allSymbols[symbol.symbol] = symbol.symbol;
+                                            });
+                                        });
+                                        GetQuotes(Object.keys(allSymbols)).then((quotes) => {
+                                            if (Array.isArray(quotes)) {
+                                                accounts.forEach((account: Account) => {
+                                                    strategies.forEach((strategy: Strategy) => {
+                                                        if (strategy.name.toLowerCase() === account.strategy.toLowerCase()) {
+                                                            // const r = BalanceAccount(account, strategy, [{ price: 50.0 }]); // for testing
+                                                            const r = BalanceAccount(account, strategy, quotes);
+                                                            console.log(r);
+                                                            balancedResults = [...balancedResults, ...r];
+                                                        }
+                                                    })
+                                                })
+                                                console.log(balancedResults);
+                                                setResults([...balancedResults]);
+                                                setTableOpen(true);
+                                                return;
+                                            }
+                                            console.error(`did not receive quotes from backend: ${JSON.stringify(quotes)}`);
+                                        });
+                                    }}>
+                                        Balance
+                                    </Button>
+
+                                </Col>
+                            </Row>
+                            <Collapse in={tableOpen}>
+                                <Row>
+                                    <Col>
+                                        <Row>
+                                            <Col className="mb-3">
+                                                {/* <ResultsView results={results} /> */}
+                                                <Table striped bordered hover responsive>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>#</th>
+                                                            {
+                                                                ResultHeaders.map((header: string, i: number): JSX.Element => {
+                                                                    return (
+                                                                        <td key={`results-header-${i}`}>{header}</td>
+                                                                    )
+                                                                })
+                                                            }
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {
+                                                            results.map((result: Result, i: number): JSX.Element => {
+                                                                return (
+                                                                    <tr key={`results-row-${i}`}>
+                                                                        <td>{i + 1}</td>
+                                                                        <td>{result.name}</td>
+                                                                        <td>{result.symbol}</td>
+                                                                        <td>{result.type}</td>
+                                                                        <td>{result.shares}</td>
+                                                                        <td>{asCurrency(result.sharePrice)}</td>
+                                                                        <td>{asCurrency(result.purchasePrice)}</td>
+                                                                        <td>{asCurrency(result.allocated)}</td>
+                                                                        <td>{asCurrency(result.remainder)}</td>
+                                                                        <td>{asPercentage(result.symbolAllocationPercentage)}</td>
+                                                                        <td>{asPercentage(result.groupAllocationPercentage)}</td>
+                                                                        <td>{asCurrency(result.fromBalance)}</td>
+                                                                    </tr>
+                                                                )
+                                                            })
+                                                        }
+                                                    </tbody>
+                                                </Table>
+                                            </Col>
+                                        </Row>
+                                        <Row>
+                                            <Col>
+                                                <Button className="mb-3 mr-3" onClick={() => {
+                                                    navigator.clipboard.writeText(getResultsAsCSV(results));
+                                                }}>
+                                                    Copy as CSV
+                                                </Button>
+                                                <Button className="mb-3 mr-3" onClick={() => {
+                                                    setStep1Open(true)
+                                                    setStep2Open(false)
+                                                    setStep3Open(false)
+                                                }}>
+                                                    Back to top
+                                                </Button>
+                                            </Col>
+                                        </Row>
+                                    </Col>
+                                </Row>
+                            </Collapse>
+                        </Col>
+                    </Row>
+                </Collapse>
+            </Container>
+        </React.Fragment>
+
     );
 }
 
