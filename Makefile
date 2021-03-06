@@ -3,3 +3,4 @@ build-site:
 	rm -rf docs
 	mv build docs
 	touch ./docs/.nojekyll
+	echo jsinvest.charlesmknox.com > ./docs/CNAME
