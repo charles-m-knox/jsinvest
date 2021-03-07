@@ -549,7 +549,7 @@ const InvestmentsView = () => {
                                         onClick={() => {
                                             setUseYahooDirect(!useYahooDirect);
                                         }}>
-                                        {useYahooDirect ? 'Use Proxy (default)' : 'Use Direct Query'}
+                                        {useYahooDirect ? 'Will query directly' : 'Will use proxy (default)'}
                                     </Button>
                                 </Col>
                             </Row>
