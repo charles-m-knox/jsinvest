@@ -4,14 +4,12 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Jumbotron from 'react-bootstrap/Jumbotron';
-// import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import { Config, Symbol, Strategy, Account, Allocation, Result, ResultHeaders } from './models'
 import { AccountView } from './account'
 import StrategyView from './strategy';
 import { BalanceAccount } from './balancer';
-import { ResultsView } from './results';
 import { GetQuotes } from './quote';
 import Collapse from 'react-bootstrap/Collapse'
 import * as yaml from 'yaml';
@@ -327,9 +325,7 @@ const InvestmentsView = () => {
                                         <Form.Label>Export:</Form.Label>
                                         <Form.Control as="textarea" rows={6}
                                             readOnly={true}
-                                            onChange={(e: any) => {
-                                                // console.log(e.target.value);
-                                            }}
+                                            onChange={(e: any) => { }}
                                             value={exportStr}
                                         />
                                     </Form.Group>
@@ -530,12 +526,10 @@ const InvestmentsView = () => {
                                                         if (strategy.name.toLowerCase() === account.strategy.toLowerCase()) {
                                                             // const r = BalanceAccount(account, strategy, [{ price: 50.0 }]); // for testing
                                                             const r = BalanceAccount(account, strategy, quotes);
-                                                            console.log(r);
                                                             balancedResults = [...balancedResults, ...r];
                                                         }
                                                     })
                                                 })
-                                                console.log(balancedResults);
                                                 setResults([...balancedResults]);
                                                 setTableOpen(true);
                                                 return;

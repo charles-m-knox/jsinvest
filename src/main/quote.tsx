@@ -89,7 +89,9 @@ export const GetQuotes = (symbols: string[], useYahooDirect: boolean = false): P
         if (response.quoteResponse.result) {
             const results: Quote[] = [];
             response.quoteResponse.result.forEach((rq: RawQuote) => {
-                results.push(TransformQuote(rq));
+                const tq = TransformQuote(rq);
+                console.log(tq);
+                results.push(tq);
             })
             return results;
         }
