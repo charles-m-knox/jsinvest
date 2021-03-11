@@ -41,7 +41,11 @@ const TransformQuote = (quote: RawQuote): Quote => {
 
     if (quote.marketState === "POST") {
         tQuote.rawQuote = quote;
-        tQuote.price = quote.postMarketPrice;
+        if (!quote.postMarketPrice) {
+            tQuote.price = quote.bid;
+        } else {
+            tQuote.price = quote.postMarketPrice;
+        }
         tQuote.change = quote.postMarketChange + quote.regularMarketChange;
         tQuote.changePercent = quote.postMarketChangePercent + quote.regularMarketChangePercent;
         tQuote.isActive = true;
